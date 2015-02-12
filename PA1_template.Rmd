@@ -1,25 +1,47 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "PA1_template.Rmd"
+author: "Michael Atkins"
+date: "February 11, 2015"
+output: html_document
 ---
 
+This is a markdown document for Peer Assessment #1 for the Coursera repdata-011 course.
 
-## Loading and preprocessing the data
+```{r, read data, echo=TRUE}
+data <- read.csv("activity.csv") ## read data from working directory
+```
 
+```{r, first question, echo=TRUE}
+histdata <- aggregate(. ~ date, data=data, FUN=sum) ## summarize data for histogram
+hist(histdata$steps, col = "steelblue", main = "# of Steps by Day", xlab = "Steps Taken") ## create histogram
+mean(histdata$steps) ## calculate and report mean
+median(histdata$steps) ## calculate and report median
+```
 
+```{r, second question, echo=TRUE}
+plot(data$interval, data$steps, type = "l", col = "maroon") ## plot time series
+maxinterval <- max(aggregate(. ~ interval, data=data, FUN=sum)) ## get max interval
+maxintervaldata <- aggregate(. ~ interval, data=data, FUN=sum) ## aggregate data
+subset(maxintervaldata, steps == maxinterval, select=interval) ## return max interval steps
+```
 
-## What is mean total number of steps taken per day?
+```{r, third question, echo=TRUE}
+nonadata <- data ## create new table for data transform
+sum(is.na(data$steps)) ## return number of "NA" in step column
+for (i in which(sapply(nonadata, is.numeric))) {
+  nonadata[is.na(nonadata[, i]), i] <- mean(nonadata[, i],  na.rm = TRUE) ## replace NA step values with mean for that day
+}
+nonahistdata <- aggregate(. ~ date, data=nonadata, FUN=sum) ## summarize data for histogram
+hist(nonahistdata$steps, col = "steelblue", main = "# of Steps by Day", xlab = "Steps Taken") ## create histogram
+mean(nonahistdata$steps) ## calculate and report mean
+median(nonahistdata$steps) ## calculate and report median
+```
 
+Missing data was removed and mean data by day was substitute per above.
 
-
-## What is the average daily activity pattern?
-
-
-
-## Imputing missing values
-
-
-
-## Are there differences in activity patterns between weekdays and weekends?
+```{r, fourth question, echo=TRUE}
+nonadata1 <- nonadata ## create new table for data transform
+nonadata1$date <- as.POSIXct(nonadata1$date) ## date to POSIXct class
+nonadata1$date <- as.factor(weekdays(nonadata1$date)) ## create weekday factor from dates
+plot(nonadata1$interval, data$steps, type = "l", col = nonadata1$date) ## plot time series
+```
