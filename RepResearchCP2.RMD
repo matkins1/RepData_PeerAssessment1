@@ -1,0 +1,73 @@
+---
+title: "Analysis of NOAA Weather Events"
+author: "Michael Atkins"
+date: "February 18, 2015"
+output: html_document
+---
+
+SNYOPSIS
+
+In this analysis, I will endeavor to answer two questions:
+
+1) Across the United States, which types of events (as indicated in the EVTYPE variable) are most harmful with respect to population health?
+  The factors used in assessing which types of events are most harmful with respect to population health are FATALITIES and INJURIES, with both total FATALITIES and INJURIES by type of event plotted. In this analysis, I assume that fatalities are significantly more important to population health and are thus the determining factor with injuries as a secondary factor.
+
+2) Across the United States, which types of events have the greatest economic consequences?
+  The factors used in assessing which types of events have the greatest economic consequences are PROPDMG and CROPDMG, with total $ values of damage by type of event plotted. 
+
+DATA PROCESSING
+```{r, download, load package dependencies, echo=FALSE} 
+require(ggplot2) 
+```
+
+```{r, download and read data file for further analysis, echo=TRUE, eval=FALSE}
+download.file("https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2", "StormData.bz2") ## download data file
+```
+
+```{r, read data file for further analysis, echo=TRUE, cache=TRUE}
+StormData <- read.csv("StormData.bz2") ## read data file
+```
+
+```{r, subset, transform, aggregate, and explore data, echo=TRUE}
+SD1 <- StormData[ ,c("EVTYPE", "FATALITIES", "INJURIES")] ## subset data to answer question 1
+SD1 <- aggregate(cbind(FATALITIES, INJURIES)~EVTYPE, data=SD1, sum) ## aggregate data by EVTYPE for question 1
+SD2 <- StormData[ ,c("EVTYPE", "PROPDMG", "CROPDMG")] ## subset data to answer question 2
+SD2 <- aggregate(cbind(PROPDMG, CROPDMG)~EVTYPE, data=SD2, sum) ## aggregate data by EVTYPE for question 2
+SD1 <-  SD1[with(SD1, order(-FATALITIES, -INJURIES)), ] ## sort data by EVTYPE first by highest FATALITIES and second by highest INJURIES
+SD1 <- head(SD1, 5) ## subset top five rows for graphing
+SD2=transform(SD2,TOTALDMG=PROPDMG+CROPDMG) ## add column for total PROPDMG & CROPDMG for question 2
+SD2 <-  SD2[with(SD2, order(-TOTALDMG)), ] ## sort data by EVTYPE by highest TOTALDMG
+SD2 <- head(SD2, 5) ## subset top five rows for graphing
+```
+
+```{r, explore fatality data for question 1, echo=TRUE}
+sum(SD1$FATALITIES) / sum(StormData$FATALITIES) ## returns % of total FATALITIES caused by top 5 EVTYPE - explored various options for top fatality causing events during analysis in determining the top 5 provided appropriate coverage given limited allocable resources
+```
+Given the limited resources of the reader of this report, I consider 67.8% coverage for all fatalities to be appropriate for allocation of resources towards events that are most harmful to population health.
+
+```{r, explore injury data for question 1, echo=TRUE}
+sum(SD1$INJURIES) / sum(StormData$INJURIES) ## returns % of total INJURIES caused by top 5 EVTYPE - explored various options for top injury causing events during analysis in determining the top 5 provided appropriate coverage given limited allocable resources
+```
+Similar to coverage of fatalities above, I consider 76.1% coverage for all injuries to be appropriate for allocation of resources towards events that are most harmful to population health.
+
+```{r, graph data for question 1, echo=TRUE}
+qplot(SD1$EVTYP, SD1$FATALITIES, ylab="Fatalities", xlab="Event Type", main="Fatalities by Event Type")
+qplot(SD1$EVTYP, SD1$INJURIES, ylab="Injuries", xlab="Event Type", main="Injuries by Event Type")
+```
+
+Tornadoes clearly present the most substantial harmful effects to population health based on the above analysis, followed by excessive heat and heat, flash floods, and lightning.
+
+```{r, explore data for question 2, echo=TRUE}
+sum(SD2$TOTALDMG) / (sum(StormData$PROPDMG) + sum(StormData$CROPDMG)) ## returns % of total TOTALDMG caused by top 5 EVTYPE - explored various options for top economimc damage causing events during analysis in determining the top 5 provided appropriate coverage given limited allocable resources
+```
+Given the limited resources of the reader of this report, I consider 70.9% coverage for all economic damage to be appropriate for allocation of resources towards events that have the most economic consequences.
+
+```{r, graph data for question 2, echo=TRUE}
+qplot(SD2$EVTYP, SD2$TOTALDMG, ylab="Total Damage", xlab="Event Type", main="Total Damage by Event Type")
+```
+
+Tornadoes clearly present the most substantial economic consequences based on the above analysis, followed by flash floods, TSTM Wind, Hail, and Floods.
+
+RESULTS
+
+I recommend that, given our limited resources, we allocate the majority of our efforts towards preventing damage to population health and reducing economic consequences due to tornadoes. Reducing fatalities caused by excessive heat would be a secondary priority given the higher number of falatities relative to other events. Our third priority should be reducing fatalities and property damage caused by flash floods.
